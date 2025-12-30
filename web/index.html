@@ -3,211 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Benlai PWA</title>
+    <title>Personal Blackbox</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a1a1a">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        /* 全局背景设为深色，防止 PC 端两侧留白太刺眼 */
-        html { background-color: #010409; }
-
-        body { 
-            background-color: #0d1117; 
-            color: #c9d1d9; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            margin: 0; 
-            padding: 20px 20px 80px 20px; 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-            box-sizing: border-box; 
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --text: #e0e0e0;
+            --accent: #bb86fc;
+            --secondary: #03dac6;
+            --error: #cf6679;
         }
-        
-        h1 { font-size: 1.1rem; color: #8b949e; margin: 0 0 20px 0; }
-        
-        /* === 📱 PC 端适配核心代码 === */
-        @media (min-width: 768px) {
-            body {
-                width: 30%;          /* 强制占浏览器 1/2 宽度 */
-                margin: 0 auto;      /* 居中显示 */
-                border-left: 1px solid #30363d;
-                border-right: 1px solid #30363d;
-                box-shadow: 0 0 50px rgba(0,0,0,0.5); /* 增加阴影提升质感 */
-            }
-            
-            /* 导航栏也要跟着居中并限制宽度 */
-            .nav-bar {
-                width: 50% !important; 
-                left: 50% !important; 
-                transform: translateX(-50%);
-            }
-        }
-        /* ============================ */
 
-        /* 导航 */
-        .nav-bar { 
-            position: fixed; bottom: 0; left: 0; right: 0; 
-            background: #161b22; 
-            border-top: 1px solid #30363d; 
-            display: flex; justify-content: space-around; padding: 12px; z-index: 100;
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
-        .nav-item { cursor: pointer; opacity: 0.5; font-size: 24px; text-align: center; }
-        .nav-item.active { opacity: 1; color: #58a6ff; }
-        .nav-text { display: block; font-size: 10px; margin-top: 4px; }
 
-        .page { display: none; height: 100%; overflow-y: auto; }
+        /* 底部导航 */
+        .nav {
+            display: flex;
+            background: var(--card);
+            padding: 10px 0;
+            border-top: 1px solid #333;
+            justify-content: space-around;
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+            color: #888;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .nav-item.active { color: var(--accent); }
+        .nav-icon { font-size: 20px; margin-bottom: 4px; }
+
+        /* 内容容器 */
+        .page {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: none;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
         .page.active { display: block; }
-        
-        /* 隐藏滚动条但保留功能 */
-        .page::-webkit-scrollbar { width: 0px; background: transparent; }
 
-        /* 写入页 */
-        .type-selector { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
-        .type-selector::-webkit-scrollbar { height: 0px; }
-        .type-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; padding: 6px 12px; border-radius: 20px; font-size: 13px; white-space: nowrap; cursor: pointer; transition: 0.2s;}
-        .type-btn:hover { background: #30363d; }
-        .type-btn.active { background: #1f6feb; color: #fff; border-color: #1f6feb; }
-        textarea { width: 100%; background: #161b22; border: 1px solid #30363d; border-radius: 12px; color: #fff; padding: 15px; font-size: 16px; min-height: 200px; box-sizing: border-box; margin-bottom: 20px; resize: none; }
-        textarea:focus { outline: 1px solid #1f6feb; }
-        .btn { background: #238636; color: #fff; border: none; padding: 15px; border-radius: 12px; font-size: 16px; width: 100%; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .btn:hover { background: #2ea043; }
-        .btn:disabled { background: #21262d; opacity: 0.6; cursor: not-allowed; }
+        /* 记录页 */
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #bbb; }
+        textarea, input, select {
+            width: 100%;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+        textarea { height: 150px; resize: none; }
+        button {
+            width: 100%;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* 对话页 */
-        .chat-box { display: flex; flex-direction: column; gap: 15px; padding-bottom: 20px; }
-        .msg { padding: 12px 16px; border-radius: 12px; max-width: 85%; line-height: 1.5; font-size: 15px; word-wrap: break-word; }
-        .msg.user { background: #1f6feb; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .msg.ai { background: #21262d; border: 1px solid #30363d; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .chat-input { display: flex; gap: 10px; margin-top: 10px; }
-        .chat-input input { flex: 1; background: #161b22; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 25px; outline: none; }
-        .chat-input input:focus { border-color: #1f6feb; }
-        .send-icon { background: #1f6feb; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
-        .send-icon:hover { background: #388bfd; }
+        /* 记忆页 (对话样式) */
+        .chat-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 80px; }
+        .msg { padding: 12px; border-radius: 12px; max-width: 85%; line-height: 1.5; font-size: 15px; }
+        .msg.user { background: var(--accent); color: #000; align-self: flex-end; }
+        .msg.ai { background: var(--card); color: var(--text); align-self: flex-start; border: 1px solid #333; }
+        .chat-input-area {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 600px;
+            padding: 10px;
+            background: var(--bg);
+            display: flex;
+            gap: 10px;
+        }
 
         /* 设置页 */
-        .settings input { width: 100%; padding: 12px; margin-bottom: 15px; background: #0d1117; border: 1px solid #30363d; color: #fff; border-radius: 8px; box-sizing: border-box; outline: none; }
-        .settings input:focus { border-color: #1f6feb; }
-        .label { font-size: 12px; color: #8b949e; margin-bottom: 6px; display: block; }
+        .settings-card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .settings-card h3 { margin-top: 0; color: var(--accent); font-size: 16px; }
+
+        /* 状态指示器 */
+        #status { font-size: 12px; text-align: center; margin-top: 10px; color: #666; }
     </style>
 </head>
 <body>
 
-    <div id="page-write" class="page active">
-        <h1>记录本来的自己，构建 AI 时代个人数据库</h1>
-        <div class="type-selector">
-            <div class="type-btn active" onclick="setType('note')">笔记</div>
-            <div class="type-btn" onclick="setType('transaction')">交易</div>
-            <div class="type-btn" onclick="setType('journal')">日记</div>
-            <div class="type-btn" onclick="setType('checkin')">打卡</div>
+    <!-- 1. 记录页 -->
+    <div id="page-record" class="page active">
+        <h2 style="color: var(--accent)">📥 记录新信息</h2>
+        <div class="input-group">
+            <label>类型</label>
+            <select id="type">
+                <option value="quick_log">📝 随手记</option>
+                <option value="thought">💡 想法</option>
+                <option value="event">📅 事件</option>
+                <option value="finance">💰 财务</option>
+            </select>
         </div>
-        <textarea id="content" placeholder="记录当下的想法..."></textarea>
-        <button class="btn" id="sendBtn" onclick="upload()">发送记录</button>
+        <div class="input-group">
+            <label>内容</label>
+            <textarea id="content" placeholder="记录这一刻..."></textarea>
+        </div>
+        <button id="sendBtn" onclick="sendRecord()">发送到 Inbox</button>
+        <div id="status"></div>
     </div>
 
-    <div id="page-chat" class="page">
-        <h1>Memory 🧠</h1>
-        <div class="chat-box" id="chatHistory">
-            <div class="msg ai">我是你的 DeepSeek 数字分身。我已经准备好读取你的加密记忆，想问什么？</div>
+    <!-- 2. 记忆页 -->
+    <div id="page-memories" class="page">
+        <h2 style="color: var(--secondary)">🧠 深度记忆</h2>
+        <div id="chatHistory" class="chat-container">
+            <div class="msg ai">你好，我是你的记忆助手。配置好仓库和密码后，我可以帮你检索过去的信息。</div>
         </div>
-        <div class="chat-input">
-            <input type="text" id="askInput" placeholder="搜回忆: 上周二做了什么?" onkeypress="if(event.keyCode==13) askDeepSeek()">
-            <div class="send-icon" onclick="askDeepSeek()">➤</div>
+        <div class="chat-input-area">
+            <input type="text" id="askInput" placeholder="问问过去的事情..." onkeydown="if(event.key==='Enter') askDeepSeek()">
+            <button style="width: 80px; padding: 10px;" onclick="askDeepSeek()">发送</button>
         </div>
     </div>
 
+    <!-- 3. 设置页 -->
     <div id="page-settings" class="page">
-        <h1>Settings ⚙️</h1>
-        <div class="settings">
-            <label class="label">数据仓库 Owner (e.g. PZVIP)</label>
-            <input id="gh_owner" placeholder="Owner">
-            
-            <label class="label">数据仓库 Repo (e.g. mylife)</label>
-            <input id="gh_repo" placeholder="Repo">
-            
-            <label class="label">GitHub Token (ghp_...)</label>
-            <input id="gh_token" type="password" placeholder="用于读写私有数据">
-            
-            <label class="label">DeepSeek 配置 (用于聊天)</label>
-            <input id="ds_key" type="password" placeholder="DeepSeek API Key (sk-...)">
-            
-            <label class="label">记忆保险箱 (用于解密)</label>
-            <input id="mem_pass" type="password" placeholder="Memory Password">
-            
-            <button class="btn" onclick="saveSettings()">保存配置</button>
+        <h2 style="color: #888">⚙️ 系统设置</h2>
+        <div class="settings-card">
+            <h3>GitHub 仓库配置</h3>
+            <input type="text" id="gh_owner" placeholder="GitHub 用户名 (如: PZVIP)" style="margin-bottom: 10px;">
+            <input type="text" id="gh_repo" placeholder="仓库名 (如: mylife)" style="margin-bottom: 10px;">
+            <input type="password" id="gh_token" placeholder="Personal Access Token (Classic)" style="margin-bottom: 10px;">
         </div>
+        <div class="settings-card">
+            <h3>加密与 AI 配置</h3>
+            <input type="password" id="mem_pass" placeholder="记忆解密密码 (MEMORY_PASSWORD)" style="margin-bottom: 10px;">
+            <input type="password" id="ds_key" placeholder="DeepSeek API Key" style="margin-bottom: 10px;">
+        </div>
+        <button onclick="saveSettings()" style="background: #444; color: #fff;">保存设置</button>
+        <p style="font-size: 11px; color: #555; margin-top: 15px;">* 设置保存在浏览器本地 (LocalStorage)，请确保在 HTTPS 环境下使用。</p>
     </div>
 
-    <div class="nav-bar">
-        <div class="nav-item active" onclick="nav('write')">📝<span class="nav-text">记录</span></div>
-        <div class="nav-item" onclick="nav('chat')">💬<span class="nav-text">回忆</span></div>
-        <div class="nav-item" onclick="nav('settings')">⚙️<span class="nav-text">设置</span></div>
+    <!-- 底部导航 -->
+    <div class="nav">
+        <div class="nav-item active" onclick="showPage('record', this)">
+            <span class="nav-icon">📝</span>
+            <span>记录</span>
+        </div>
+        <div class="nav-item" onclick="showPage('memories', this)">
+            <span class="nav-icon">🧠</span>
+            <span>记忆</span>
+        </div>
+        <div class="nav-item" onclick="showPage('settings', this)">
+            <span class="nav-icon">⚙️</span>
+            <span>设置</span>
+        </div>
     </div>
 
     <script>
-        let curType = 'note';
         let memories = [];
-        let locationData = null;
 
+        // 初始化加载设置
         window.onload = () => {
-            ['gh_owner','gh_repo','gh_token','ds_key','mem_pass'].forEach(k => {
-                if(localStorage.getItem(k)) document.getElementById(k).value = localStorage.getItem(k);
+            ['gh_owner', 'gh_repo', 'gh_token', 'mem_pass', 'ds_key'].forEach(id => {
+                document.getElementById(id).value = localStorage.getItem(id) || '';
             });
-            if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p => locationData = p.coords);
         };
 
-        function nav(p) {
-            document.querySelectorAll('.page').forEach(e => e.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-            document.getElementById('page-'+p).classList.add('active');
-            event.currentTarget.classList.add('active');
-            if(p === 'chat') loadMemories();
-        }
-
-        function setType(t) {
-            curType = t;
-            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+        function showPage(id, el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`page-${id}`).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            if(id === 'memories') loadMemories();
         }
 
         function saveSettings() {
-            ['gh_owner','gh_repo','gh_token','ds_key','mem_pass'].forEach(k => {
-                localStorage.setItem(k, document.getElementById(k).value.trim());
+            ['gh_owner', 'gh_repo', 'gh_token', 'mem_pass', 'ds_key'].forEach(id => {
+                localStorage.setItem(id, document.getElementById(id).value);
             });
-            alert('✅ 配置已保存');
-            location.reload();
+            alert('✅ 设置已保存');
         }
 
-        async function upload() {
+        async function sendRecord() {
             const content = document.getElementById('content').value;
-            if(!content) return;
-            document.getElementById('sendBtn').disabled = true;
-            document.getElementById('sendBtn').innerText = "上传中...";
+            const type = document.getElementById('type').value;
+            if(!content) return alert('请输入内容');
+
+            const owner = localStorage.getItem('gh_owner');
+            const repo = localStorage.getItem('gh_repo');
+            const token = localStorage.getItem('gh_token');
+            if(!owner || !repo || !token) return alert('请先在设置中配置 GitHub 信息');
+
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            btn.innerText = "正在发送...";
 
             const now = new Date();
             const payload = {
                 meta: { ver: "3.0", ts: Math.floor(now.getTime()/1000), iso_time: now.toISOString(), source: "pwa_web" },
-                event: { type: curType, content: content },
-                micro: { geo: locationData ? { coords:[locationData.latitude, locationData.longitude] } : null },
-                macro: {}
+                event: { type: type, content: content, tags: [] },
+                micro: {}, macro: {}
             };
 
             const path = `inbox/${now.toISOString().replace(/[:.]/g,'-')}.json`;
-            const url = `https://api.github.com/repos/${localStorage.getItem('gh_owner')}/${localStorage.getItem('gh_repo')}/contents/${path}`;
-            
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
             try {
-                await fetch(url, {
+                const res = await fetch(url, {
                     method: 'PUT',
-                    headers: { 'Authorization': `token ${localStorage.getItem('gh_token')}` },
+                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        message: `📱 ${curType}`,
+                        message: `📱 ${type} from web`,
                         content: btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
                     })
                 });
-                alert('✅ 记录成功');
+
+                if(!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || '提交失败');
+                }
+
+                alert('✅ 记录成功！ETL 将在几分钟内处理');
                 document.getElementById('content').value = '';
-            } catch(e) { alert('❌ 错误:'+e); }
-            document.getElementById('sendBtn').disabled = false;
-            document.getElementById('sendBtn').innerText = "发送记录";
+            } catch(e) {
+                alert('❌ 发送失败: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "发送到 Inbox";
+            }
         }
 
         async function loadMemories() {
@@ -218,50 +267,52 @@
             const token = localStorage.getItem('gh_token');
             const pass = localStorage.getItem('mem_pass');
 
-            if(!owner || !repo || !token || !pass) return addMsg("⚠️ 请先在设置里填写完整的仓库信息和密码", 'ai');
+            if(!owner || !repo || !token || !pass) {
+                return addMsg("⚠️ 请先在设置中填写完整的仓库信息和密码", 'ai');
+            }
 
             try {
                 addMsg("🔐 正在从远程仓库下载并解密记忆...", 'ai');
-                
                 const url = `https://api.github.com/repos/${owner}/${repo}/contents/web/memory.lock?ref=main`; 
-                const res = await fetch(url, {
-                    headers: { 'Authorization': `token ${token}` }
-                });
+                const res = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
 
-                if(!res.ok) throw new Error("无法连接数据仓库 (404/403) - 请检查 Token 和 Repo");
+                if(!res.ok) throw new Error("无法获取数据 (检查 Token/Repo)");
                 
                 const data = await res.json();
-                const encryptedContent = window.atob(data.content.replace(/\n/g, ""));
+                const encryptedBase64 = data.content.replace(/\n/g, "");
                 
+                // 解密逻辑 (AES-256-CBC)
                 const key = CryptoJS.SHA256(pass);
-                const raw = CryptoJS.enc.Base64.parse(encryptedContent);
-                const iv = CryptoJS.lib.WordArray.create(raw.words.slice(0, 4));
-                const cipher = CryptoJS.lib.WordArray.create(raw.words.slice(4));
+                const rawData = CryptoJS.enc.Base64.parse(encryptedBase64);
+                const iv = CryptoJS.lib.WordArray.create(rawData.words.slice(0, 4));
+                const ciphertext = CryptoJS.lib.WordArray.create(rawData.words.slice(4));
                 
-                const decrypted = CryptoJS.AES.decrypt({ ciphertext: cipher }, key, { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
-                const json = decrypted.toString(CryptoJS.enc.Utf8);
+                const decrypted = CryptoJS.AES.decrypt({ ciphertext: ciphertext }, key, { 
+                    iv: iv, 
+                    mode: CryptoJS.mode.CBC, 
+                    padding: CryptoJS.pad.Pkcs7 
+                });
                 
-                if(!json) throw new Error("密码错误或数据损坏");
+                const jsonStr = decrypted.toString(CryptoJS.enc.Utf8);
+                if(!jsonStr) throw new Error("解密失败 (密码可能错误)");
                 
-                memories = JSON.parse(json);
+                memories = JSON.parse(jsonStr);
                 addMsg(`🔓 成功加载 ${memories.length} 条记忆！`, 'ai');
-
             } catch(e) { 
-                console.error(e);
                 addMsg("❌ 加载失败: " + e.message, 'ai'); 
             }
         }
 
         async function askDeepSeek() {
             const q = document.getElementById('askInput').value;
-            if(!q) return;
+            const key = localStorage.getItem('ds_key');
+            if(!q || !key) return alert('请输入问题并确保配置了 DeepSeek Key');
+
             addMsg(q, 'user');
             document.getElementById('askInput').value = '';
-            
-            const key = localStorage.getItem('ds_key');
-            if(!key) return addMsg("请配置 DeepSeek Key", 'ai');
 
-            const context = memories.slice(0, 50).map(m => `[${m.d}] ${m.c} (Env:${m.w},${m.m})`).join('\n');
+            // 获取最近 50 条记忆作为上下文
+            const context = memories.slice(0, 50).map(m => `[${m.d}] ${m.c}`).join('\n');
 
             try {
                 const res = await fetch("https://api.deepseek.com/chat/completions", {
@@ -270,7 +321,7 @@
                     body: JSON.stringify({
                         model: "deepseek-chat",
                         messages: [
-                            {role: "system", content: `你是一个记忆助手。基于以下用户日记回答问题:\n${context}`},
+                            {role: "system", content: `你是一个记忆助手。基于以下用户的历史记忆回答问题。如果没找到相关内容，请如实告知。记忆内容：\n${context}`},
                             {role: "user", content: q}
                         ]
                     })
@@ -284,10 +335,9 @@
             const d = document.createElement('div');
             d.className = `msg ${role}`;
             d.innerText = txt;
-            document.getElementById('chatHistory').appendChild(d);
-            // 自动滚动到底部
-            const chatHistory = document.getElementById('chatHistory');
-            chatHistory.scrollTop = chatHistory.scrollHeight;
+            const history = document.getElementById('chatHistory');
+            history.appendChild(d);
+            history.scrollTop = history.scrollHeight;
         }
     </script>
 </body>
